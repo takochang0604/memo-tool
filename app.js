@@ -594,10 +594,10 @@ async function saveNote() {
     const data = { title, tag, content, images: allImages };
     if (currentNoteId) {
       await updateNote(currentNoteId, data);
-      showToast('筆記已更新 ✓', 'success');
+      showToast('筆記已更新', 'success');
     } else {
       await addNote(data);
-      showToast('筆記已儲存 ✓', 'success');
+      showToast('筆記已儲存', 'success');
     }
 
     closeNoteModal();
