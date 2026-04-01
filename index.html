@@ -173,7 +173,13 @@
           </div>
         </div>
         <div class="header-right">
-          <span class="user-badge" id="user-badge"></span>
+          <button class="btn-change-pw" onclick="showChangePwModal()" id="btn-change-pw" title="變更密碼">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span class="change-pw-label">變更密碼</span>
+          </button>
 
           <button class="btn-logout-text" onclick="handleLogout()" id="btn-logout">
             <svg class="logout-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -197,6 +203,7 @@
             <option value="newest">最新建立</option>
             <option value="oldest">最舊建立</option>
             <option value="updated">最近更新</option>
+            <option value="tag">按標籤排序</option>
           </select>
         </div>
       </div>
@@ -312,6 +319,49 @@
       <div class="modal-footer">
         <button class="btn-secondary" onclick="closeConfirmModal()">取消</button>
         <button class="btn-danger" id="btn-confirm-delete" onclick="confirmDelete()">確認刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 變更密碼彈窗 ========== -->
+  <div class="modal-overlay" id="change-pw-modal" onclick="if(event.target===event.currentTarget)closeChangePwModal()">
+    <div class="modal-box modal-box-sm" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">變更密碼</h2>
+        <button class="modal-close" onclick="closeChangePwModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="pw-current">目前密碼 <span class="required">*</span></label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="pw-current" class="form-input" placeholder="請輸入目前密碼" autocomplete="current-password">
+            <button class="toggle-pw" onclick="togglePassword('pw-current')" type="button">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pw-new">新密碼 <span class="required">*</span></label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="pw-new" class="form-input" placeholder="至少 6 個字元" autocomplete="new-password">
+            <button class="toggle-pw" onclick="togglePassword('pw-new')" type="button">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pw-confirm">確認新密碼 <span class="required">*</span></label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="pw-confirm" class="form-input" placeholder="再次輸入新密碼" autocomplete="new-password">
+            <button class="toggle-pw" onclick="togglePassword('pw-confirm')" type="button">👁</button>
+          </div>
+        </div>
+        <div id="change-pw-message" class="auth-message"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeChangePwModal()">取消</button>
+        <button class="btn-primary" id="btn-do-change-pw" onclick="handleChangePw()">
+          <span class="btn-text">確認變更</span>
+        </button>
       </div>
     </div>
   </div>

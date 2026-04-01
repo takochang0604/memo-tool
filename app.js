@@ -149,14 +149,15 @@ auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
     showPage('main-page');
-    const username = user.email.replace(EMAIL_SUFFIX, '');
-    document.getElementById('user-badge').textContent = '👤 ' + username;
     startListenNotes();
   } else {
     currentUser = null;
     showPage('auth-page');
     if (unsubscribeNotes) { unsubscribeNotes(); unsubscribeNotes = null; }
     allNotes = [];
+    // 重設登入 / 註冊按鈕 loading 狀態，避免登出後殘留 spinner
+    setButtonLoading(document.getElementById('btn-login'), false);
+    setButtonLoading(document.getElementById('btn-register'), false);
   }
 });
 
@@ -300,6 +301,15 @@ function getFilteredSortedNotes() {
     notes.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
   } else if (currentSort === 'updated') {
     notes.sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+  } else if (currentSort === 'tag') {
+    notes.sort((a, b) => {
+      const ta = (a.tag || '').toLowerCase();
+      const tb = (b.tag || '').toLowerCase();
+      if (!ta && !tb) return 0;
+      if (!ta) return 1;   // 無標籤排後
+      if (!tb) return -1;
+      return ta.localeCompare(tb, 'zh-Hant');
+    });
   }
   // 'manual' 保持 allNotes 原始順序（已依 order 排好）
 
@@ -780,6 +790,80 @@ function filterByTag(tag) {
 function handleSort() {
   currentSort = document.getElementById('sort-select').value;
   renderNotes();
+}
+
+// ============================================================
+// CHANGE PASSWORD
+// ============================================================
+function showChangePwModal() {
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value     = '';
+  document.getElementById('pw-confirm').value = '';
+  const msg = document.getElementById('change-pw-message');
+  msg.textContent = '';
+  msg.className   = 'auth-message';
+  document.getElementById('change-pw-modal').classList.add('active');
+  setTimeout(() => document.getElementById('pw-current').focus(), 100);
+}
+
+function closeChangePwModal() {
+  document.getElementById('change-pw-modal').classList.remove('active');
+}
+
+function closeChangePwOutside(event) {
+  if (event.target === document.getElementById('change-pw-modal')) closeChangePwModal();
+}
+
+async function handleChangePw() {
+  const currentPw = document.getElementById('pw-current').value;
+  const newPw     = document.getElementById('pw-new').value;
+  const confirmPw = document.getElementById('pw-confirm').value;
+  const msgEl     = document.getElementById('change-pw-message');
+
+  const showMsg = (text, type = 'error') => {
+    msgEl.textContent = text;
+    msgEl.className   = 'auth-message ' + type;
+  };
+
+  if (!currentPw || !newPw || !confirmPw) {
+    showMsg('請填寫所有欄位');
+    return;
+  }
+  if (newPw.length < 6) {
+    showMsg('新密碼至少需要 6 個字元');
+    return;
+  }
+  if (newPw !== confirmPw) {
+    showMsg('兩次輸入的新密碼不相符');
+    return;
+  }
+
+  const btn = document.getElementById('btn-do-change-pw');
+  setButtonLoading(btn, true);
+
+  try {
+    // Re-authenticate first
+    const credential = firebase.auth.EmailAuthProvider.credential(
+      currentUser.email, currentPw
+    );
+    await currentUser.reauthenticateWithCredential(credential);
+    // Update password
+    await currentUser.updatePassword(newPw);
+    showMsg('密碼已成功變更！', 'success');
+    setTimeout(() => closeChangePwModal(), 1500);
+  } catch (err) {
+    let msg = '變更失敗，請再試一次';
+    if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      msg = '目前密碼檢訌失敗，請確認是否正確';
+    } else if (err.code === 'auth/too-many-requests') {
+      msg = '操作過於頻繁，請稍後再試';
+    } else if (err.code === 'auth/weak-password') {
+      msg = '新密碼強度不足，請使用更強的密碼';
+    }
+    showMsg(msg);
+  } finally {
+    setButtonLoading(btn, false);
+  }
 }
 
 // ============================================================
